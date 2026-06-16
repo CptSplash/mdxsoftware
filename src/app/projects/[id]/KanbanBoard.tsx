@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useMemo } from 'react'
 import { Plus, X, Trash2, Calendar } from 'lucide-react'
+import { useUser } from '@clerk/nextjs'
 import { AvatarGroup } from '@/components/ui/avatar-bubble'
 import { createTaskCard, moveTaskCard, deleteTaskCard } from '@/lib/supabase/actions'
-import { TEAM } from '@/lib/team'
+import { TEAM, clerkUserToMember } from '@/lib/team'
 import type { TaskCard, CardColumn, CardPriority, CardAssignee } from '@/lib/types'
 
 const COLUMNS: { id: CardColumn; label: string; color: string }[] = [
@@ -45,11 +46,25 @@ interface Props {
 }
 
 export function KanbanBoard({ projectId, initialCards }: Props) {
+  const { user } = useUser()
   const [cards, setCards] = useState<TaskCard[]>(initialCards)
   const [addingTo, setAddingTo] = useState<CardColumn | null>(null)
   const [form, setForm] = useState<AddForm>(BLANK_FORM)
   const [saving, setSaving] = useState(false)
   const dragCard = useRef<string | null>(null)
+
+  // Current logged-in user as an assignee — initials from Clerk name, colour from user ID hash
+  const currentUser = useMemo<CardAssignee | null>(() => {
+    if (!user) return null
+    return clerkUserToMember(user.fullName, user.id)
+  }, [user])
+
+  // Full picker list: current user first, then the rest of the team (deduped by name)
+  const pickerTeam = useMemo(() => {
+    if (!currentUser) return TEAM
+    const others = TEAM.filter(m => m.name !== currentUser.name)
+    return [currentUser, ...others]
+  }, [currentUser])
 
   const cardsIn = (col: CardColumn) => cards.filter(c => c.columnName === col)
 
@@ -216,8 +231,9 @@ export function KanbanBoard({ projectId, initialCards }: Props) {
                   <div>
                     <p className="text-[10px] text-gray-400 mb-1 font-medium">Assign to</p>
                     <div className="flex flex-wrap gap-1">
-                      {TEAM.map(member => {
+                      {pickerTeam.map(member => {
                         const selected = form.assignees.some(a => a.name === member.name)
+                        const isMe = currentUser?.name === member.name
                         return (
                           <button
                             key={member.name}
@@ -233,7 +249,7 @@ export function KanbanBoard({ projectId, initialCards }: Props) {
                             >
                               {member.initials}
                             </span>
-                            {member.name.split(' ')[0]}
+                            {isMe ? 'You' : member.name.split(' ')[0]}
                           </button>
                         )
                       })}
