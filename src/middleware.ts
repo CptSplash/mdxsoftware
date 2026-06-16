@@ -3,15 +3,25 @@ import { NextResponse } from 'next/server'
 
 const isPublicRoute = createRouteMatcher(['/sign-in(.*)', '/sign-up(.*)'])
 
-export default clerkMiddleware(async (auth, request) => {
-  if (isPublicRoute(request)) return NextResponse.next()
+// Publishable key passed explicitly — bypasses Edge Runtime env var baking issues.
+// This key is intentionally public (NEXT_PUBLIC_) and safe to include in source.
+const CLERK_PK = 'pk_test_YWNlLXBlbGljYW4tNTQuY2xlcmsuYWNjb3VudHMuZGV2JA'
 
-  const { userId } = await auth()
-  if (!userId) {
-    const signInUrl = new URL('/sign-in', request.url)
-    return NextResponse.redirect(signInUrl)
-  }
-})
+export default clerkMiddleware(
+  async (auth, request) => {
+    if (isPublicRoute(request)) return NextResponse.next()
+
+    try {
+      const { userId } = await auth()
+      if (!userId) {
+        return NextResponse.redirect(new URL('/sign-in', request.url))
+      }
+    } catch {
+      return NextResponse.redirect(new URL('/sign-in', request.url))
+    }
+  },
+  { publishableKey: CLERK_PK }
+)
 
 export const config = {
   matcher: [
