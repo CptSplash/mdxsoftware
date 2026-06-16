@@ -8,6 +8,7 @@ import type { Project, Client, WorkOrder, PaymentClaim, PrelimLine, DiaryEntry, 
 import { formatAUD, formatDate, daysUntil } from '@/lib/utils'
 import { RepositoryTab } from './RepositoryTab'
 import { KanbanBoard } from './KanbanBoard'
+import { GanttChart } from './GanttChart'
 
 const WEATHER_EMOJI: Record<string, string> = {
   Sunny: '☀️',
@@ -41,6 +42,7 @@ export default function ProjectTabs({ project, client, workOrders, claims, preli
       <TabsList className="gap-1">
         <TabsTrigger value="overview">Overview</TabsTrigger>
         <TabsTrigger value="board">Board</TabsTrigger>
+        <TabsTrigger value="schedule">Schedule</TabsTrigger>
         <TabsTrigger value="prelims">Prelims</TabsTrigger>
         <TabsTrigger value="work-orders">Work Orders</TabsTrigger>
         <TabsTrigger value="claims">Claims</TabsTrigger>
@@ -316,6 +318,11 @@ export default function ProjectTabs({ project, client, workOrders, claims, preli
       {/* BOARD */}
       <TabsContent value="board">
         <KanbanBoard projectId={project.id} initialCards={taskCards} />
+      </TabsContent>
+
+      {/* SCHEDULE */}
+      <TabsContent value="schedule">
+        <GanttChart projectType={project.type} startDate={project.startDate} />
       </TabsContent>
 
       {/* REPOSITORY */}
