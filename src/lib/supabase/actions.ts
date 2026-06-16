@@ -124,3 +124,26 @@ export async function createPaymentClaim(formData: FormData) {
   revalidatePath(`/projects/${projectId}`)
   revalidatePath('/claims')
 }
+
+// --- Project Files ---
+export async function saveFileMetadata({
+  projectId, folder, filename, r2Key, fileSize, contentType,
+}: {
+  projectId: string; folder: string; filename: string
+  r2Key: string; fileSize: number; contentType: string
+}) {
+  const sb = createClient()
+  const { error } = await sb.from('project_files').insert({
+    project_id: projectId, folder, filename, r2_key: r2Key,
+    file_size: fileSize, content_type: contentType,
+  })
+  if (error) throw new Error(error.message)
+  revalidatePath(`/projects/${projectId}`)
+}
+
+export async function deleteProjectFile(fileId: string, projectId: string) {
+  const sb = createClient()
+  const { error } = await sb.from('project_files').delete().eq('id', fileId)
+  if (error) throw new Error(error.message)
+  revalidatePath(`/projects/${projectId}`)
+}

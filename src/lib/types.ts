@@ -43,3 +43,8 @@ export interface DiaryEntry {
   weather: 'Sunny' | 'Partly Cloudy' | 'Overcast' | 'Rain' | 'Wind' | 'Extreme'
   workCompleted: string; delays: string; visitors: string; hasIssues: boolean
 }
+
+export interface ProjectFile {
+  id: string; projectId: string; folder: string; filename: string
+  r2Key: string; fileSize: number; contentType: string; createdAt: string
+}

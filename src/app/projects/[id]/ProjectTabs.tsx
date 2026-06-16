@@ -4,10 +4,9 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { Progress } from '@/components/ui/progress'
-import { Button } from '@/components/ui/button'
-import type { Project, Client, WorkOrder, PaymentClaim, PrelimLine, DiaryEntry, Tradie } from '@/lib/types'
+import type { Project, Client, WorkOrder, PaymentClaim, PrelimLine, DiaryEntry, Tradie, ProjectFile } from '@/lib/types'
 import { formatAUD, formatDate, daysUntil } from '@/lib/utils'
-import { Upload, Folder } from 'lucide-react'
+import { RepositoryTab } from './RepositoryTab'
 
 const WEATHER_EMOJI: Record<string, string> = {
   Sunny: '☀️',
@@ -18,18 +17,6 @@ const WEATHER_EMOJI: Record<string, string> = {
   Extreme: '⚡',
 }
 
-const REPO_FOLDERS = [
-  'Drawings — Architectural',
-  'Drawings — Structural',
-  'Reports',
-  'Contracts & Legal',
-  'Permits & Approvals',
-  'Quotes & Invoices',
-  'Site Photos',
-  'Correspondence',
-  'Handover Docs',
-]
-
 interface Props {
   project: Project
   client: Client | null
@@ -38,9 +25,10 @@ interface Props {
   prelims: PrelimLine[]
   diary: DiaryEntry[]
   tradies: Tradie[]
+  projectFiles: ProjectFile[]
 }
 
-export default function ProjectTabs({ project, client, workOrders, claims, prelims, diary, tradies }: Props) {
+export default function ProjectTabs({ project, client, workOrders, claims, prelims, diary, tradies, projectFiles }: Props) {
   const totalClaimed = claims.reduce((s, c) => s + c.amount, 0)
   const totalCommitted = workOrders.reduce((s, wo) => s + wo.quotedPrice, 0)
   const prelimBudget = prelims.reduce((s, p) => s + p.budgeted, 0)
@@ -324,25 +312,7 @@ export default function ProjectTabs({ project, client, workOrders, claims, preli
 
       {/* REPOSITORY */}
       <TabsContent value="repository">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {REPO_FOLDERS.map(folder => (
-            <Card key={folder} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Folder className="w-8 h-8 text-[#F59E0B]" />
-                  <div>
-                    <p className="font-medium text-gray-900 text-sm">{folder}</p>
-                    <p className="text-xs text-gray-400">0 files</p>
-                  </div>
-                </div>
-                <Button variant="outline" size="sm" className="gap-1.5 text-xs">
-                  <Upload className="w-3 h-3" />
-                  Upload
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <RepositoryTab projectId={project.id} initialFiles={projectFiles} />
       </TabsContent>
     </Tabs>
   )

@@ -1,4 +1,4 @@
-import type { Project, Client, Tradie, WorkOrder, PaymentClaim, PrelimLine, DiaryEntry } from '@/lib/types'
+import type { Project, Client, Tradie, WorkOrder, PaymentClaim, PrelimLine, DiaryEntry, ProjectFile } from '@/lib/types'
 
 // Check if Supabase is actually configured
 function isSupabaseConfigured(): boolean {
@@ -238,4 +238,29 @@ export async function getProjectsByClient(clientId: string): Promise<Project[]> 
   const { data, error } = await sb.from('projects').select('*').eq('client_id', clientId).order('created_at', { ascending: false })
   if (error || !data) return mockProjects.filter(p => p.clientId === clientId)
   return data.map(mapProject)
+}
+
+function mapProjectFile(row: Record<string, unknown>): ProjectFile {
+  return {
+    id: row.id as string,
+    projectId: row.project_id as string,
+    folder: row.folder as string,
+    filename: row.filename as string,
+    r2Key: row.r2_key as string,
+    fileSize: row.file_size as number,
+    contentType: row.content_type as string,
+    createdAt: row.created_at as string,
+  }
+}
+
+export async function getProjectFiles(projectId: string): Promise<ProjectFile[]> {
+  if (!isSupabaseConfigured()) return []
+  const sb = await getSupabase()
+  const { data, error } = await sb
+    .from('project_files')
+    .select('*')
+    .eq('project_id', projectId)
+    .order('created_at', { ascending: false })
+  if (error || !data) return []
+  return data.map(r => mapProjectFile(r as Record<string, unknown>))
 }
