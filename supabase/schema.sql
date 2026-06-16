@@ -167,6 +167,41 @@ CREATE POLICY "allow all" ON payment_claims FOR ALL USING (true) WITH CHECK (tru
 CREATE POLICY "allow all" ON prelim_lines   FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "allow all" ON diary_entries  FOR ALL USING (true) WITH CHECK (true);
 
+-- gantt_task_overrides
+CREATE TABLE gantt_task_overrides (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  project_id  UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  path_id     TEXT NOT NULL,
+  task_key    TEXT NOT NULL,
+  start_date  DATE,
+  end_date    DATE,
+  notes       TEXT NOT NULL DEFAULT '',
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(project_id, path_id, task_key)
+);
+CREATE TRIGGER gantt_task_overrides_updated_at BEFORE UPDATE ON gantt_task_overrides FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+ALTER TABLE gantt_task_overrides ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "allow all" ON gantt_task_overrides FOR ALL USING (true) WITH CHECK (true);
+CREATE INDEX ON gantt_task_overrides(project_id, path_id);
+
+-- schedule_milestones
+CREATE TABLE schedule_milestones (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  project_id  UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  key         TEXT NOT NULL,
+  label       TEXT NOT NULL,
+  date        DATE,
+  notes       TEXT NOT NULL DEFAULT '',
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(project_id, key)
+);
+CREATE TRIGGER schedule_milestones_updated_at BEFORE UPDATE ON schedule_milestones FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+ALTER TABLE schedule_milestones ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "allow all" ON schedule_milestones FOR ALL USING (true) WITH CHECK (true);
+CREATE INDEX ON schedule_milestones(project_id);
+
 -- ============================================================
 -- SEED DATA (mirrors mock-data.ts)
 -- ============================================================

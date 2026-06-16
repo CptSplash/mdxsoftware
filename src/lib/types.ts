@@ -49,6 +49,35 @@ export interface ProjectFile {
   r2Key: string; fileSize: number; contentType: string; createdAt: string
 }
 
+export type GanttTaskStatus = 'pending' | 'in_progress' | 'complete' | 'delayed' | 'blocked'
+
+export interface GanttTaskRow {
+  id: string; projectId: string; pathId: string
+  groupName: string; groupColor: string; taskName: string; responsible: string
+  plannedStart: number; plannedEnd: number
+  actualStart: number | null; actualEnd: number | null
+  status: GanttTaskStatus; notes: string; isRisk: boolean; sortOrder: number
+}
+
+export interface GanttTaskOverride {
+  id: string
+  projectId: string
+  pathId: string
+  taskKey: string       // `${groupName}::${taskName}`
+  startDate: string | null
+  endDate: string | null
+  notes: string
+}
+
+export interface ScheduleMilestone {
+  id: string
+  projectId: string
+  key: string
+  label: string
+  date: string | null
+  notes: string
+}
+
 export type CardColumn = 'Backlog' | 'To Do' | 'In Progress' | 'In Review' | 'Done'
 export type CardPriority = 'Low' | 'Medium' | 'High' | 'Urgent'
 

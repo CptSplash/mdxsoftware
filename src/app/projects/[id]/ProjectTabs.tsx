@@ -4,7 +4,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { Progress } from '@/components/ui/progress'
-import type { Project, Client, WorkOrder, PaymentClaim, PrelimLine, DiaryEntry, Tradie, ProjectFile, TaskCard } from '@/lib/types'
+import type { Project, Client, WorkOrder, PaymentClaim, PrelimLine, DiaryEntry, Tradie, ProjectFile, TaskCard, ScheduleMilestone, GanttTaskOverride } from '@/lib/types'
 import { formatAUD, formatDate, daysUntil } from '@/lib/utils'
 import { RepositoryTab } from './RepositoryTab'
 import { KanbanBoard } from './KanbanBoard'
@@ -29,9 +29,11 @@ interface Props {
   tradies: Tradie[]
   projectFiles: ProjectFile[]
   taskCards: TaskCard[]
+  milestones: ScheduleMilestone[]
+  ganttOverrides: GanttTaskOverride[]
 }
 
-export default function ProjectTabs({ project, client, workOrders, claims, prelims, diary, tradies, projectFiles, taskCards }: Props) {
+export default function ProjectTabs({ project, client, workOrders, claims, prelims, diary, tradies, projectFiles, taskCards, milestones, ganttOverrides }: Props) {
   const totalClaimed = claims.reduce((s, c) => s + c.amount, 0)
   const totalCommitted = workOrders.reduce((s, wo) => s + wo.quotedPrice, 0)
   const prelimBudget = prelims.reduce((s, p) => s + p.budgeted, 0)
@@ -322,7 +324,13 @@ export default function ProjectTabs({ project, client, workOrders, claims, preli
 
       {/* SCHEDULE */}
       <TabsContent value="schedule">
-        <GanttChart projectType={project.type} startDate={project.startDate} />
+        <GanttChart
+          projectType={project.type}
+          startDate={project.startDate}
+          projectId={project.id}
+          initialMilestones={milestones}
+          initialOverrides={ganttOverrides}
+        />
       </TabsContent>
 
       {/* REPOSITORY */}

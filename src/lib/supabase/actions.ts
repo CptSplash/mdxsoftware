@@ -148,6 +148,44 @@ export async function deleteProjectFile(fileId: string, projectId: string) {
   revalidatePath(`/projects/${projectId}`)
 }
 
+// --- Gantt Task Overrides ---
+export async function upsertGanttTaskOverride({
+  projectId, pathId, taskKey, startDate, endDate, notes,
+}: {
+  projectId: string; pathId: string; taskKey: string
+  startDate: string | null; endDate: string | null; notes: string
+}) {
+  const sb = createClient()
+  const { error } = await sb.from('gantt_task_overrides').upsert({
+    project_id: projectId,
+    path_id: pathId,
+    task_key: taskKey,
+    start_date: startDate || null,
+    end_date: endDate || null,
+    notes: notes || '',
+  }, { onConflict: 'project_id,path_id,task_key' })
+  if (error) throw new Error(error.message)
+  revalidatePath(`/projects/${projectId}`)
+}
+
+// --- Schedule Milestones ---
+export async function upsertMilestone({
+  projectId, key, label, date, notes,
+}: {
+  projectId: string; key: string; label: string; date: string | null; notes?: string
+}) {
+  const sb = createClient()
+  const { error } = await sb.from('schedule_milestones').upsert({
+    project_id: projectId,
+    key,
+    label,
+    date: date || null,
+    notes: notes || '',
+  }, { onConflict: 'project_id,key' })
+  if (error) throw new Error(error.message)
+  revalidatePath(`/projects/${projectId}`)
+}
+
 // --- Task Cards ---
 import type { CardColumn, CardPriority, CardAssignee } from '@/lib/types'
 

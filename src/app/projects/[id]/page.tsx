@@ -12,6 +12,8 @@ import {
   getTradies,
   getProjectFiles,
   getTaskCardsByProject,
+  getMilestonesByProject,
+  getGanttTaskOverrides,
 } from '@/lib/supabase/queries'
 import { ArrowLeft } from 'lucide-react'
 import ProjectTabs from './ProjectTabs'
@@ -24,7 +26,7 @@ export default async function ProjectDetailPage({ params }: Props) {
   const project = await getProjectById(params.id)
   if (!project) notFound()
 
-  const [client, workOrders, claims, prelims, diary, tradies, projectFiles, taskCards] = await Promise.all([
+  const [client, workOrders, claims, prelims, diary, tradies, projectFiles, taskCards, milestones, ganttOverrides] = await Promise.all([
     getClientById(project.clientId),
     getWorkOrdersByProject(params.id),
     getClaimsByProject(params.id),
@@ -33,6 +35,8 @@ export default async function ProjectDetailPage({ params }: Props) {
     getTradies(),
     getProjectFiles(params.id),
     getTaskCardsByProject(params.id),
+    getMilestonesByProject(params.id),
+    getGanttTaskOverrides(params.id),
   ])
 
   return (
@@ -67,6 +71,8 @@ export default async function ProjectDetailPage({ params }: Props) {
         tradies={tradies}
         projectFiles={projectFiles}
         taskCards={taskCards}
+        milestones={milestones}
+        ganttOverrides={ganttOverrides}
       />
     </div>
   )

@@ -1,4 +1,4 @@
-import type { Project, Client, Tradie, WorkOrder, PaymentClaim, PrelimLine, DiaryEntry, ProjectFile, TaskCard } from '@/lib/types'
+import type { Project, Client, Tradie, WorkOrder, PaymentClaim, PrelimLine, DiaryEntry, ProjectFile, TaskCard, ScheduleMilestone, GanttTaskOverride } from '@/lib/types'
 
 // Check if Supabase is actually configured
 function isSupabaseConfigured(): boolean {
@@ -290,6 +290,48 @@ export async function getTaskCardsByProject(projectId: string): Promise<TaskCard
     .order('sort_order')
   if (error || !data) return []
   return data.map(r => mapTaskCard(r as Record<string, unknown>))
+}
+
+export async function getGanttTaskOverrides(projectId: string): Promise<GanttTaskOverride[]> {
+  if (!isSupabaseConfigured()) return []
+  const sb = await getSupabase()
+  const { data, error } = await sb
+    .from('gantt_task_overrides')
+    .select('*')
+    .eq('project_id', projectId)
+  if (error || !data) return []
+  return data.map(r => ({
+    id: r.id as string,
+    projectId: r.project_id as string,
+    pathId: r.path_id as string,
+    taskKey: r.task_key as string,
+    startDate: (r.start_date as string) || null,
+    endDate: (r.end_date as string) || null,
+    notes: (r.notes as string) || '',
+  }))
+}
+
+function mapMilestone(row: Record<string, unknown>): ScheduleMilestone {
+  return {
+    id: row.id as string,
+    projectId: row.project_id as string,
+    key: row.key as string,
+    label: row.label as string,
+    date: (row.date as string) || null,
+    notes: (row.notes as string) || '',
+  }
+}
+
+export async function getMilestonesByProject(projectId: string): Promise<ScheduleMilestone[]> {
+  if (!isSupabaseConfigured()) return []
+  const sb = await getSupabase()
+  const { data, error } = await sb
+    .from('schedule_milestones')
+    .select('*')
+    .eq('project_id', projectId)
+    .order('created_at')
+  if (error || !data) return []
+  return data.map(r => mapMilestone(r as Record<string, unknown>))
 }
 
 export async function getAllTaskCards(): Promise<TaskCard[]> {

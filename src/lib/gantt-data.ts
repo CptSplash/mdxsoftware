@@ -1,3 +1,25 @@
+export interface MilestoneDef {
+  key: string
+  label: string
+  color: string
+  paths: string[]  // path IDs this applies to, or ['*'] for all
+}
+
+export const MILESTONE_DEFS: MilestoneDef[] = [
+  { key: 'land_start',           label: 'Land Acquisition',              color: '#64748b', paths: ['*'] },
+  { key: 'da_submission',        label: 'DA Submission',                  color: '#166534', paths: ['*'] },
+  { key: 'da_approval',          label: 'DA Approval',                    color: '#16a34a', paths: ['*'] },
+  { key: 'factory_booking',      label: 'Factory Booking',               color: '#b45309', paths: ['amj', 'gsmod'] },
+  { key: 'ship_arrive',          label: 'Ship Arrives / Customs Clear',  color: '#92400e', paths: ['amj', 'gsmod'] },
+  { key: 'construction_start',   label: 'Construction Start (On-Site)',  color: '#6d28d9', paths: ['*'] },
+  { key: 'pod_delivery',         label: 'Pod / Panel Delivery to Site',  color: '#5b21b6', paths: ['amj', 'gsmod'] },
+  { key: 'practical_completion', label: 'Practical Completion',          color: '#065f46', paths: ['*'] },
+]
+
+export function milestonesForPath(pathId: string): MilestoneDef[] {
+  return MILESTONE_DEFS.filter(m => m.paths.includes('*') || m.paths.includes(pathId))
+}
+
 export interface GanttTask {
   n: string       // task name
   s: number       // start week

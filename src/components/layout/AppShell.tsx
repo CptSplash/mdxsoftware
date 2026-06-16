@@ -23,7 +23,7 @@ export function AppShell({ children, title }: AppShellProps) {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto p-6" style={{ backgroundColor: '#F8FAFC' }}>
+        <main className="flex-1 overflow-y-auto overflow-x-hidden p-6" style={{ backgroundColor: '#F8FAFC' }}>
           {children}
         </main>
       </div>

@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Folder, Upload, FileText, Image, File, Trash2, Download, Loader2 } from 'lucide-react'
+import { Folder, Upload, FileText, Image as ImageIcon, File, Trash2, Download, Loader2 } from 'lucide-react'
 import { saveFileMetadata, deleteProjectFile } from '@/lib/supabase/actions'
 import { formatDate } from '@/lib/utils'
 import type { ProjectFile } from '@/lib/types'
@@ -22,7 +22,7 @@ const FOLDERS = [
 ]
 
 function fileIcon(contentType: string) {
-  if (contentType.startsWith('image/')) return <Image className="w-4 h-4 text-amber-500" />
+  if (contentType.startsWith('image/')) return <ImageIcon className="w-4 h-4 text-amber-500" />
   if (contentType === 'application/pdf') return <FileText className="w-4 h-4 text-red-500" />
   return <File className="w-4 h-4 text-slate-400" />
 }
