@@ -1,3 +1,11 @@
 {
-  "framework": "nextjs"
+  "framework": "nextjs",
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "x-vercel-protection-bypass", "value": "off" }
+      ]
+    }
+  ]
 }
