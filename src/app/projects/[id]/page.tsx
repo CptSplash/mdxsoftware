@@ -11,6 +11,7 @@ import {
   getDiaryByProject,
   getTradies,
   getProjectFiles,
+  getTaskCardsByProject,
 } from '@/lib/supabase/queries'
 import { ArrowLeft } from 'lucide-react'
 import ProjectTabs from './ProjectTabs'
@@ -23,7 +24,7 @@ export default async function ProjectDetailPage({ params }: Props) {
   const project = await getProjectById(params.id)
   if (!project) notFound()
 
-  const [client, workOrders, claims, prelims, diary, tradies, projectFiles] = await Promise.all([
+  const [client, workOrders, claims, prelims, diary, tradies, projectFiles, taskCards] = await Promise.all([
     getClientById(project.clientId),
     getWorkOrdersByProject(params.id),
     getClaimsByProject(params.id),
@@ -31,6 +32,7 @@ export default async function ProjectDetailPage({ params }: Props) {
     getDiaryByProject(params.id),
     getTradies(),
     getProjectFiles(params.id),
+    getTaskCardsByProject(params.id),
   ])
 
   return (
@@ -64,6 +66,7 @@ export default async function ProjectDetailPage({ params }: Props) {
         diary={diary}
         tradies={tradies}
         projectFiles={projectFiles}
+        taskCards={taskCards}
       />
     </div>
   )

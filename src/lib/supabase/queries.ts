@@ -1,4 +1,4 @@
-import type { Project, Client, Tradie, WorkOrder, PaymentClaim, PrelimLine, DiaryEntry, ProjectFile } from '@/lib/types'
+import type { Project, Client, Tradie, WorkOrder, PaymentClaim, PrelimLine, DiaryEntry, ProjectFile, TaskCard } from '@/lib/types'
 
 // Check if Supabase is actually configured
 function isSupabaseConfigured(): boolean {
@@ -263,4 +263,42 @@ export async function getProjectFiles(projectId: string): Promise<ProjectFile[]>
     .order('created_at', { ascending: false })
   if (error || !data) return []
   return data.map(r => mapProjectFile(r as Record<string, unknown>))
+}
+
+function mapTaskCard(row: Record<string, unknown>): TaskCard {
+  return {
+    id: row.id as string,
+    projectId: row.project_id as string,
+    title: row.title as string,
+    description: (row.description as string) || '',
+    columnName: row.column_name as TaskCard['columnName'],
+    assignees: (row.assignees as TaskCard['assignees']) || [],
+    priority: (row.priority as TaskCard['priority']) || 'Medium',
+    dueDate: (row.due_date as string) || null,
+    sortOrder: (row.sort_order as number) || 0,
+    createdAt: row.created_at as string,
+  }
+}
+
+export async function getTaskCardsByProject(projectId: string): Promise<TaskCard[]> {
+  if (!isSupabaseConfigured()) return []
+  const sb = await getSupabase()
+  const { data, error } = await sb
+    .from('task_cards')
+    .select('*')
+    .eq('project_id', projectId)
+    .order('sort_order')
+  if (error || !data) return []
+  return data.map(r => mapTaskCard(r as Record<string, unknown>))
+}
+
+export async function getAllTaskCards(): Promise<TaskCard[]> {
+  if (!isSupabaseConfigured()) return []
+  const sb = await getSupabase()
+  const { data, error } = await sb
+    .from('task_cards')
+    .select('*')
+    .order('sort_order')
+  if (error || !data) return []
+  return data.map(r => mapTaskCard(r as Record<string, unknown>))
 }

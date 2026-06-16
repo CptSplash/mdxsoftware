@@ -147,3 +147,56 @@ export async function deleteProjectFile(fileId: string, projectId: string) {
   if (error) throw new Error(error.message)
   revalidatePath(`/projects/${projectId}`)
 }
+
+// --- Task Cards ---
+import type { CardColumn, CardPriority, CardAssignee } from '@/lib/types'
+
+export async function createTaskCard({
+  projectId, title, description, columnName, assignees, priority, dueDate,
+}: {
+  projectId: string; title: string; description: string
+  columnName: CardColumn; assignees: CardAssignee[]; priority: CardPriority; dueDate: string | null
+}) {
+  const sb = createClient()
+  const { error } = await sb.from('task_cards').insert({
+    project_id: projectId, title, description,
+    column_name: columnName, assignees, priority,
+    due_date: dueDate || null, sort_order: Date.now(),
+  })
+  if (error) throw new Error(error.message)
+  revalidatePath(`/projects/${projectId}`)
+  revalidatePath('/')
+}
+
+export async function moveTaskCard(cardId: string, columnName: CardColumn, projectId: string) {
+  const sb = createClient()
+  const { error } = await sb.from('task_cards').update({ column_name: columnName }).eq('id', cardId)
+  if (error) throw new Error(error.message)
+  revalidatePath(`/projects/${projectId}`)
+  revalidatePath('/')
+}
+
+export async function deleteTaskCard(cardId: string, projectId: string) {
+  const sb = createClient()
+  const { error } = await sb.from('task_cards').delete().eq('id', cardId)
+  if (error) throw new Error(error.message)
+  revalidatePath(`/projects/${projectId}`)
+  revalidatePath('/')
+}
+
+export async function updateTaskCard(cardId: string, projectId: string, updates: {
+  title?: string; description?: string; assignees?: CardAssignee[]
+  priority?: CardPriority; dueDate?: string | null
+}) {
+  const sb = createClient()
+  const { error } = await sb.from('task_cards').update({
+    ...(updates.title !== undefined && { title: updates.title }),
+    ...(updates.description !== undefined && { description: updates.description }),
+    ...(updates.assignees !== undefined && { assignees: updates.assignees }),
+    ...(updates.priority !== undefined && { priority: updates.priority }),
+    ...(updates.dueDate !== undefined && { due_date: updates.dueDate || null }),
+  }).eq('id', cardId)
+  if (error) throw new Error(error.message)
+  revalidatePath(`/projects/${projectId}`)
+  revalidatePath('/')
+}

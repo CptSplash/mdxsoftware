@@ -2,19 +2,21 @@ import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { Progress } from '@/components/ui/progress'
-import { getProjects, getClients, getAllClaims, getWorkOrders } from '@/lib/supabase/queries'
+import { getProjects, getClients, getAllClaims, getWorkOrders, getAllTaskCards } from '@/lib/supabase/queries'
 import { formatAUD, formatDate, daysUntil } from '@/lib/utils'
+import { AvatarGroup } from '@/components/ui/avatar-bubble'
 
 function getTodayStr() {
   return new Date().toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
 }
 
 export default async function DashboardPage() {
-  const [projects, clients, paymentClaims, workOrders] = await Promise.all([
+  const [projects, clients, paymentClaims, workOrders, allCards] = await Promise.all([
     getProjects(),
     getClients(),
     getAllClaims(),
     getWorkOrders(),
+    getAllTaskCards(),
   ])
 
   const activeProjects = projects.filter(p => p.status === 'Active')
@@ -120,6 +122,87 @@ export default async function DashboardPage() {
           })}
         </div>
       </div>
+
+      {/* Active Tasks board overview */}
+      {allCards.length > 0 && (
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-base font-semibold text-gray-700">Active Tasks</h3>
+            <div className="flex gap-3 text-xs text-gray-500">
+              {(['Backlog','To Do','In Progress','In Review','Done'] as const).map(col => {
+                const count = allCards.filter(c => c.columnName === col).length
+                const dotColor: Record<string, string> = {
+                  'Backlog': '#94A3B8', 'To Do': '#3B82F6',
+                  'In Progress': '#F59E0B', 'In Review': '#8B5CF6', 'Done': '#10B981',
+                }
+                return count > 0 ? (
+                  <span key={col} className="flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: dotColor[col] }} />
+                    {col} <span className="font-semibold text-gray-700">{count}</span>
+                  </span>
+                ) : null
+              })}
+            </div>
+          </div>
+
+          {/* In Progress strip */}
+          {allCards.filter(c => c.columnName === 'In Progress').length > 0 && (
+            <div className="space-y-2">
+              <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">In Progress</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2">
+                {allCards.filter(c => c.columnName === 'In Progress').map(card => {
+                  const project = projects.find(p => p.id === card.projectId)
+                  const priorityColor: Record<string, string> = {
+                    Low: '#94A3B8', Medium: '#3B82F6', High: '#F59E0B', Urgent: '#EF4444'
+                  }
+                  return (
+                    <Link key={card.id} href={`/projects/${card.projectId}?tab=board`}>
+                      <Card className="hover:shadow-md transition-shadow cursor-pointer overflow-hidden">
+                        <div className="h-0.5" style={{ backgroundColor: priorityColor[card.priority] }} />
+                        <CardContent className="p-3 flex items-center justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-gray-900 truncate">{card.title}</p>
+                            {project && (
+                              <p className="text-xs text-gray-400 truncate">{project.name}</p>
+                            )}
+                          </div>
+                          <AvatarGroup assignees={card.assignees} />
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* In Review strip */}
+          {allCards.filter(c => c.columnName === 'In Review').length > 0 && (
+            <div className="space-y-2 mt-3">
+              <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">In Review</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2">
+                {allCards.filter(c => c.columnName === 'In Review').map(card => {
+                  const project = projects.find(p => p.id === card.projectId)
+                  return (
+                    <Link key={card.id} href={`/projects/${card.projectId}?tab=board`}>
+                      <Card className="hover:shadow-md transition-shadow cursor-pointer overflow-hidden">
+                        <div className="h-0.5 bg-purple-500" />
+                        <CardContent className="p-3 flex items-center justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-gray-900 truncate">{card.title}</p>
+                            {project && <p className="text-xs text-gray-400 truncate">{project.name}</p>}
+                          </div>
+                          <AvatarGroup assignees={card.assignees} />
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }

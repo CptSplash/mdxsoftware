@@ -4,9 +4,10 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { Progress } from '@/components/ui/progress'
-import type { Project, Client, WorkOrder, PaymentClaim, PrelimLine, DiaryEntry, Tradie, ProjectFile } from '@/lib/types'
+import type { Project, Client, WorkOrder, PaymentClaim, PrelimLine, DiaryEntry, Tradie, ProjectFile, TaskCard } from '@/lib/types'
 import { formatAUD, formatDate, daysUntil } from '@/lib/utils'
 import { RepositoryTab } from './RepositoryTab'
+import { KanbanBoard } from './KanbanBoard'
 
 const WEATHER_EMOJI: Record<string, string> = {
   Sunny: '☀️',
@@ -26,9 +27,10 @@ interface Props {
   diary: DiaryEntry[]
   tradies: Tradie[]
   projectFiles: ProjectFile[]
+  taskCards: TaskCard[]
 }
 
-export default function ProjectTabs({ project, client, workOrders, claims, prelims, diary, tradies, projectFiles }: Props) {
+export default function ProjectTabs({ project, client, workOrders, claims, prelims, diary, tradies, projectFiles, taskCards }: Props) {
   const totalClaimed = claims.reduce((s, c) => s + c.amount, 0)
   const totalCommitted = workOrders.reduce((s, wo) => s + wo.quotedPrice, 0)
   const prelimBudget = prelims.reduce((s, p) => s + p.budgeted, 0)
@@ -38,6 +40,7 @@ export default function ProjectTabs({ project, client, workOrders, claims, preli
     <Tabs defaultValue="overview">
       <TabsList className="gap-1">
         <TabsTrigger value="overview">Overview</TabsTrigger>
+        <TabsTrigger value="board">Board</TabsTrigger>
         <TabsTrigger value="prelims">Prelims</TabsTrigger>
         <TabsTrigger value="work-orders">Work Orders</TabsTrigger>
         <TabsTrigger value="claims">Claims</TabsTrigger>
@@ -308,6 +311,11 @@ export default function ProjectTabs({ project, client, workOrders, claims, preli
             </Card>
           ))}
         </div>
+      </TabsContent>
+
+      {/* BOARD */}
+      <TabsContent value="board">
+        <KanbanBoard projectId={project.id} initialCards={taskCards} />
       </TabsContent>
 
       {/* REPOSITORY */}

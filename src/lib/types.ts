@@ -48,3 +48,16 @@ export interface ProjectFile {
   id: string; projectId: string; folder: string; filename: string
   r2Key: string; fileSize: number; contentType: string; createdAt: string
 }
+
+export type CardColumn = 'Backlog' | 'To Do' | 'In Progress' | 'In Review' | 'Done'
+export type CardPriority = 'Low' | 'Medium' | 'High' | 'Urgent'
+
+export interface CardAssignee {
+  name: string; initials: string; color: string
+}
+
+export interface TaskCard {
+  id: string; projectId: string; title: string; description: string
+  columnName: CardColumn; assignees: CardAssignee[]; priority: CardPriority
+  dueDate: string | null; sortOrder: number; createdAt: string
+}
