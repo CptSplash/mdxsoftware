@@ -1,0 +1,21 @@
+# dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# env files — never commit these
+.env.local
+.env.*.local
+.env.production
+
+# Next.js
+.next/
+out/
+
+# build
+dist/
+
+# misc
+.DS_Store
+*.pem
+npm-debug.log*
