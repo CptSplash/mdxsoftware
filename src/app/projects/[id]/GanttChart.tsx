@@ -7,13 +7,45 @@ import { upsertGanttTaskOverride } from '@/lib/supabase/actions'
 import type { GanttTask, GanttGroup } from '@/lib/gantt-data'
 import type { ProjectType, ScheduleMilestone, GanttTaskOverride } from '@/lib/types'
 
-const PX_PER_WK  = 20
-const LEFT_W     = 'clamp(260px, 30%, 360px)'   // room for edit button, task name, and trade
-const WEEK_H     = 34    // week header row px
-const GRP_H      = 28    // group header row px
-const TASK_H     = 32    // task row px
+const PX_PER_WK       = 22
+const LEFT_W          = 'clamp(240px, 28%, 340px)'
+const MONTH_H         = 36   // month header row px
+const GRP_H           = 28   // group header row px
+const TASK_H          = 32   // task row px
 const TRACKING_MONTHS = 30
-const MIN_WEEKS  = 132   // 30-month tracking window with a little rounding buffer
+const MIN_WEEKS       = 132  // 30-month tracking window
+
+interface MonthBand {
+  label: string
+  startWeek: number
+  endWeek: number
+  widthPx: number
+}
+
+function getMonthBands(projectStart: string, totalWeeks: number): MonthBand[] {
+  const origin = new Date(projectStart)
+  const bands: MonthBand[] = []
+  let cursor = new Date(origin.getFullYear(), origin.getMonth(), 1)
+
+  while (true) {
+    const next = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1)
+    const startWeek = Math.max(0, (cursor.getTime() - origin.getTime()) / (7 * 86_400_000))
+    const endWeek   = Math.min(totalWeeks, (next.getTime() - origin.getTime()) / (7 * 86_400_000))
+    if (startWeek >= totalWeeks) break
+    const widthPx = (endWeek - startWeek) * PX_PER_WK
+    if (widthPx > 0) {
+      bands.push({
+        label: cursor.toLocaleDateString('en-AU', { month: 'short', year: '2-digit' }),
+        startWeek,
+        endWeek,
+        widthPx,
+      })
+    }
+    cursor = next
+    if (endWeek >= totalWeeks) break
+  }
+  return bands
+}
 
 interface Props {
   projectType: ProjectType
@@ -62,15 +94,9 @@ export function GanttChart({ projectType, startDate, projectId, initialMilestone
   const [editing, setEditing]       = useState<EditState | null>(null)
   const [pending, startTransition]  = useTransition()
 
-  const path = GANTT_PATHS[pathIdx]
-  const W    = Math.max(path.weeks, MIN_WEEKS)
-
-  // Week label (calendar date from project start)
-  function weekLabel(w: number): string {
-    const d = new Date(startDate)
-    d.setDate(d.getDate() + w * 7)
-    return d.toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })
-  }
+  const path       = GANTT_PATHS[pathIdx]
+  const W          = Math.max(path.weeks, MIN_WEEKS)
+  const monthBands = getMonthBands(startDate, W)
 
   // Find override for a task
   function getOverride(taskKey: string): GanttTaskOverride | undefined {
@@ -200,17 +226,29 @@ export function GanttChart({ projectType, startDate, projectId, initialMilestone
         <p className="self-end text-[10px] text-slate-600 italic shrink-0">Use the pencil or double-click a task to edit dates</p>
       </div>
 
-      <div className="flex min-h-0 overflow-hidden" style={{ borderTop: '1px solid #334155' }}>
+      {/*
+        CSS Grid: 1fr for the right column is computed AFTER subtracting the left column
+        from available space — unlike flex, it never expands past the container boundary.
+        This is what definitively fixes the horizontal overflow.
+      */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: `${LEFT_W} 1fr`,
+          borderTop: '1px solid #334155',
+          overflow: 'hidden',
+        }}
+      >
 
-        {/* Fixed front column */}
+        {/* Fixed left column */}
         <div
-          className="shrink-0 flex flex-col bg-[#0f172a] z-10"
-          style={{ width: LEFT_W, borderRight: '1px solid #1e293b' }}
+          className="flex flex-col bg-[#0f172a] z-10"
+          style={{ borderRight: '1px solid #1e293b' }}
         >
           {/* Header */}
           <div
             className="flex items-center px-3 border-b border-[#334155] shrink-0"
-            style={{ height: WEEK_H }}
+            style={{ height: MONTH_H }}
           >
             <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Edit / Task / Trade</span>
           </div>
@@ -261,28 +299,30 @@ export function GanttChart({ projectType, startDate, projectId, initialMilestone
           ))}
         </div>
 
-        {/* Scrollable timeline */}
-        <div className="flex-1 min-w-0 overflow-x-auto overflow-y-hidden bg-[#0f172a]">
+        {/* Scrollable timeline — grid cell gets 1fr which is constrained to available space */}
+        <div className="overflow-x-auto overflow-y-hidden bg-[#0f172a]" style={{ minWidth: 0 }}>
           <div style={{ width: W * PX_PER_WK }}>
 
-            {/* Week header */}
+            {/* Month header */}
             <div
-              className="flex border-b border-[#334155] bg-[#0f172a]"
-              style={{ height: WEEK_H }}
+              className="flex border-b border-[#334155] bg-[#0a1628]"
+              style={{ height: MONTH_H }}
             >
-              {Array.from({ length: W }, (_, w) => (
+              {monthBands.map((band, i) => (
                 <div
-                  key={w}
-                  className="shrink-0 flex items-end justify-center pb-1"
+                  key={i}
+                  className="shrink-0 flex items-center pl-2"
                   style={{
-                    width: PX_PER_WK,
-                    fontSize: 8,
-                    color: w % 4 === 0 ? '#94a3b8' : '#1e293b',
-                    fontWeight: w % 4 === 0 ? 700 : 400,
-                    borderLeft: w % 4 === 0 ? '1px solid #334155' : '1px solid #1e293b',
+                    width: band.widthPx,
+                    borderLeft: '1px solid #334155',
+                    fontSize: 10,
+                    fontWeight: 700,
+                    color: '#94a3b8',
+                    overflow: 'hidden',
+                    whiteSpace: 'nowrap',
                   }}
                 >
-                  {w % 4 === 0 ? weekLabel(w) : ''}
+                  {band.label}
                 </div>
               ))}
             </div>
